@@ -12,7 +12,7 @@ public class EckslangRegexPattern : IEckslangPattern
         if (!pattern.StartsWith(@"\G"))
             pattern = @"\G" + pattern;
 
-        Expression = new Regex(pattern);
+        Expression = new Regex(pattern, RegexOptions.Compiled);
     }
 
     public EckslangRegexPattern(Regex expression)
@@ -25,9 +25,14 @@ public class EckslangRegexPattern : IEckslangPattern
         var head = scanner.Head;
         
         var matches = Expression.EnumerateMatches(head);
-        matches.MoveNext();
-        var match = matches.Current;
+        if (!matches.MoveNext())
+            return ReadOnlySpan<char>.Empty;
 
-        return head.Slice(match.Index, match.Length);
+        var match = matches.Current;
+        var result = head.Slice(match.Index, match.Length);
+        if (match.Index != 0)
+            throw new FormatException($"The Eckslang Regex pattern caught a match '{result}' at {scanner.Position + match.Index} when starting from {scanner.Position}.");
+
+        return result;
     }
 }
