@@ -6,9 +6,6 @@ public interface IEckslangCursor
     int Line { get; }
     int Column { get; }
 
-    void Advance(ReadOnlySpan<char> span, IEckslangScanner scanner);
-    void Backtrack(ReadOnlySpan<char> span, IEckslangScanner scanner);
-
-    IEckslangCursor Clone();
-    void Assign(IEckslangCursor cursor);
+    IEckslangCursor Advance(ReadOnlySpan<char> span, IEckslangScanner scanner);
+    IEckslangCursor Backtrack(ReadOnlySpan<char> span, IEckslangScanner scanner);
 }

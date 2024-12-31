@@ -157,28 +157,21 @@ public class EckslangCursorTests
         var scanner = new EckslangScanner(Tail + Span + Head);
 
         scanner.JumpTo(Tail.Length);
-        InitialCursor = scanner.Cursor.Clone();
+        InitialCursor = scanner.Cursor;
 
         scanner.JumpTo(Tail.Length + Span.Length);
-        AdvanceCursor = scanner.Cursor.Clone();
+        AdvanceCursor = scanner.Cursor;
 
         scanner.JumpTo(Tail.Length);
-        BacktrackCursor = scanner.Cursor.Clone();
+        BacktrackCursor = scanner.Cursor;
     }
 
     private void ThenInitialCursorShouldBe(int position, int line, int column)
-        => CheckCursor(InitialCursor, position, line, column);
+        => Assert.Equal(new EckslangCursor(position, line, column), InitialCursor);
 
     private void ThenAdvanceCursorShouldBe(int position, int line, int column)
-        => CheckCursor(AdvanceCursor, position, line, column);
+        => Assert.Equal(new EckslangCursor(position, line, column), AdvanceCursor);
 
     private void ThenBacktrackCursorShouldMatchInitialCursor()
-        => CheckCursor(BacktrackCursor, InitialCursor.Position, InitialCursor.Line, InitialCursor.Column);
-
-    private void CheckCursor(IEckslangCursor cursor, int position, int line, int column)
-    {
-        Assert.Equal(position, cursor.Position);
-        Assert.Equal(line, cursor.Line);
-        Assert.Equal(column, cursor.Column);
-    }
+        => Assert.Equal(InitialCursor, BacktrackCursor);
 }

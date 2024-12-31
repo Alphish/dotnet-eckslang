@@ -4,13 +4,13 @@ public class EckslangScanner : IEckslangScanner
 {
     public string Content { get; }
     public int Position { get; private set; }
-    public IEckslangCursor Cursor { get; }
+    public IEckslangCursor Cursor => UpdateCursor();
 
     public EckslangScanner(string content)
     {
         Content = content;
         Position = 0;
-        Cursor = new EckslangCursor();
+        LastCursor = new EckslangCursor();
     }
 
     public ReadOnlySpan<char> Head => Content.AsSpan(Position);
@@ -23,30 +23,39 @@ public class EckslangScanner : IEckslangScanner
             return match;
 
         Position += match.Length;
-        Cursor.Advance(match, this);
         return match;
     }
 
+    // ------------------------
+    // Position/cursor handling
+    // ------------------------
+
+    private IEckslangCursor LastCursor { get; set; }
+
     public void JumpTo(IEckslangCursor cursor)
     {
+        LastCursor = cursor;
         Position = cursor.Position;
-        Cursor.Assign(cursor);
     }
 
     public void JumpTo(int position)
     {
-        var addedLength = position - Position;
-        if (addedLength > 0)
+        Position = position;
+    }
+
+    private IEckslangCursor UpdateCursor()
+    {
+        var positionChange = Position - LastCursor.Position;
+        if (positionChange > 0)
         {
-            var advanceSpan = Content.AsSpan(Position, addedLength);
-            Position = position;
-            Cursor.Advance(advanceSpan, this);
+            var advanceSpan = Content.AsSpan(LastCursor.Position, positionChange);
+            LastCursor = LastCursor.Advance(advanceSpan, this);
         }
-        else if (addedLength < 0)
+        else if (positionChange < 0)
         {
-            var backSpan = Content.AsSpan(position, -addedLength);
-            Position = position;
-            Cursor.Backtrack(backSpan, this);
+            var backSpan = Content.AsSpan(Position, -positionChange);
+            LastCursor = LastCursor.Backtrack(backSpan, this);
         }
+        return LastCursor;
     }
 }
