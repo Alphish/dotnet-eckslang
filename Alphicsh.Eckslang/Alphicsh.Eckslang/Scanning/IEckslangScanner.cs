@@ -4,6 +4,8 @@ public interface IEckslangScanner
 {
     int Position { get; }
     IEckslangCursor Cursor { get; }
+    bool EndOfContent { get; }
+
     ReadOnlySpan<char> Head { get; }
     ReadOnlySpan<char> Tail { get; }
 

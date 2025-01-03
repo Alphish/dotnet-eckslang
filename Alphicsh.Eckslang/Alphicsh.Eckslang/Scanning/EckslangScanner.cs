@@ -4,6 +4,8 @@ public class EckslangScanner : IEckslangScanner
 {
     public string Content { get; }
     public int Position { get; private set; }
+    public bool EndOfContent => Position >= Content.Length;
+
     public IEckslangCursor Cursor => UpdateCursor();
 
     public EckslangScanner(string content)
