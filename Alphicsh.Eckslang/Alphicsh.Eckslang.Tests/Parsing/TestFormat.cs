@@ -1,18 +1,21 @@
-﻿using Alphicsh.Eckslang.Parsing;
-using Alphicsh.Eckslang.Scanning;
+﻿using System.Text.RegularExpressions;
+using Alphicsh.Eckslang.Parsing;
 
 namespace Alphicsh.Eckslang.Tests.Parsing;
 
-internal class TestFormat : BaseEckslangFormat<TestFormat>
+public class TestFormat : BaseEckslangFormat<TestParseRun>
 {
-    public IEckslangPattern WordPattern { get; } = new EckslangRegexPattern(@"\w+");
-    public IEckslangPattern OpenParenthesisPattern { get; } = new EckslangStringPattern("(");
-    public IEckslangPattern CloseParenthesisPattern { get; } = new EckslangStringPattern(")");
-    public IEckslangPattern CommaPattern { get; } = new EckslangStringPattern(",");
-    public IEckslangPattern SpacePattern { get; } = new EckslangRegexPattern(@"\s+");
+    public TestExpressionReader Reader { get; }
+    public Regex WordPattern { get; } = new Regex(@"\G\w+", RegexOptions.Compiled);
+    public Regex SpacePattern { get; } = new Regex(@"\G\s+", RegexOptions.Compiled);
 
-    protected override EckslangParseStep GetRootStep(IEckslangParser<TestFormat> parser)
+    public TestFormat()
     {
-        return new TestExpressionReader(parser).ReadWord;
+        Reader = new TestExpressionReader(this);
+    }
+
+    protected override void PrepareRun(TestParseRun run)
+    {
+        run.ProceedWith(Reader.ReadWord);
     }
 }

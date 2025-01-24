@@ -3,44 +3,55 @@ using Alphicsh.Eckslang.Scanning;
 
 namespace Alphicsh.Eckslang.Tests.Parsing;
 
-internal class TestExpressionReader : EckslangReader<TestFormat>
+public class TestExpressionReader : EckslangReader<TestFormat>
 {
-    public TestExpressionReader(IEckslangParser<TestFormat> parser) : base(parser) { }
+    public TestExpressionReader(TestFormat format) : base(format) { }
 
-    public bool ReadWord(IEckslangScanner scanner, IEckslangVisitor visitor)
+    public StepCompletion ReadWord(IEckslangScanner scanner, TestParseRun run)
     {
-        scanner.ReadSpan(Format.SpacePattern);
-        var word = scanner.ReadSpan(Format.WordPattern);
-        visitor.Visit("call", word, null, null, null);
-        scanner.ReadSpan(Format.SpacePattern);
-        return ProceedWith(TryOpenParenthesis);
+        scanner.SkipRegex(Format.SpacePattern);
+
+        var word = scanner.ReadRegex(Format.WordPattern);
+        run.VisitWord(word);
+
+        scanner.SkipRegex(Format.SpacePattern);
+        return run.ProceedWith(TryOpenParenthesis);
     }
 
-    public bool TryOpenParenthesis(IEckslangScanner scanner, IEckslangVisitor visitor)
+    public StepCompletion TryOpenParenthesis(IEckslangScanner scanner, TestParseRun run)
     {
-        var openParenthesis = scanner.ReadSpan(Format.OpenParenthesisPattern);
-        if (openParenthesis.IsEmpty)
-            return Leave();
+        if (!scanner.TrySkipChar('('))
+            return run.LeaveScope();
 
-        visitor.Visit("begin_params", ReadOnlySpan<char>.Empty, null, null, null);
-        var closeParenthesis = scanner.ReadSpan(Format.CloseParenthesisPattern);
-        if (!closeParenthesis.IsEmpty)
-        {
-            visitor.Visit("end_params", ReadOnlySpan<char>.Empty, null, null, null);
-            return Leave();
-        }
+        run.OpenParam();
 
-        return Enter(ReadWord, ContinueParenthesis);
+        scanner.SkipRegex(Format.SpacePattern);
+        if (scanner.CurrentCharacter == ')')
+            return run.ProceedWith(CloseParenthesis);
+
+        return run.EnterScope(ReadWord, ContinueParenthesis);
     }
 
-    public bool ContinueParenthesis(IEckslangScanner scanner, IEckslangVisitor visitor)
+    public StepCompletion ContinueParenthesis(IEckslangScanner scanner, TestParseRun run)
     {
-        var comma = scanner.ReadSpan(Format.CommaPattern);
-        if (!comma.IsEmpty)
-            return Enter(ReadWord, ContinueParenthesis);
+        if (!scanner.TrySkipChar(','))
+            return run.ProceedWith(CloseParenthesis);
 
-        var parenthesis = scanner.ReadSpan(Format.CloseParenthesisPattern);
-        visitor.Visit("end_params", ReadOnlySpan<char>.Empty, null, null, null);
-        return Leave();
+        run.SeparateItem();
+
+        scanner.SkipRegex(Format.SpacePattern);
+        if (scanner.CurrentCharacter == ')')
+            return run.ProceedWith(CloseParenthesis);
+
+        return run.EnterScope(ReadWord, ContinueParenthesis);
+    }
+
+    public StepCompletion CloseParenthesis(IEckslangScanner scanner, TestParseRun run)
+    {
+        scanner.ExpectChar(')');
+        run.CloseParam();
+
+        scanner.SkipRegex(Format.SpacePattern);
+        return run.LeaveScope();
     }
 }
