@@ -2,47 +2,31 @@
 
 namespace Alphicsh.Eckslang.Parsing;
 
-public class EckslangParser<TFormat> : IEckslangParser<TFormat>
-    where TFormat : IEckslangFormat<TFormat>
+public class EckslangParser<TRun> : IEckslangParser
+    where TRun : IEckslangParseRun<TRun>
 {
-    public TFormat Format { get; }
     private IEckslangScanner Scanner { get; }
-    private IEckslangVisitor Visitor { get; }
+    private TRun Run { get; }
 
-    public EckslangParser(TFormat format, IEckslangScanner scanner, IEckslangVisitor visitor)
+    public EckslangParser(IEckslangScanner scanner, TRun run)
     {
-        Format = format;
         Scanner = scanner;
-        Visitor = visitor;
+        Run = run;
     }
-
-    private Stack<EckslangParseStep> StepsStack { get; } = new Stack<EckslangParseStep>();
-    public bool IsFinished { get; private set; } = false;
 
     public void ParseNext()
     {
-        if (IsFinished)
+        if (Run.IsFinished)
             return;
 
-        IsFinished = !StepsStack.TryPop(out var step) || step.Invoke(Scanner, Visitor);
+        Run.CurrentStep(Scanner, Run);
     }
 
     public void ParseAll()
     {
-        while (!IsFinished)
+        while (!Run.IsFinished)
         {
             ParseNext();
         }
-    }
-
-    public void ScheduleStep(EckslangParseStep step)
-    {
-        StepsStack.Push(step);
-    }
-
-    public void ScheduleSteps(params EckslangParseStep[] steps)
-    {
-        foreach (var step in steps.Reverse())
-            StepsStack.Push(step);
     }
 }

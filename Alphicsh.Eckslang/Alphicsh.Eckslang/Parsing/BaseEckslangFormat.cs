@@ -2,22 +2,15 @@
 
 namespace Alphicsh.Eckslang.Parsing;
 
-public abstract class BaseEckslangFormat<TFormat> : IEckslangFormat<TFormat>
-    where TFormat : IEckslangFormat<TFormat>
+public abstract class BaseEckslangFormat<TRun> : IEckslangFormat<TRun>
+    where TRun : IEckslangParseRun<TRun>
 {
-    public void SetupParser(IEckslangParser<TFormat> parser, IEckslangVisitor visitor)
+    public IEckslangParser Parse(string content, TRun run)
     {
-        parser.ScheduleSteps(GetRootStep(parser), FinishParsing);
+        var scanner = new EckslangScanner(content);
+        PrepareRun(run);
+        return new EckslangParser<TRun>(scanner, run);
     }
 
-    protected abstract EckslangParseStep GetRootStep(IEckslangParser<TFormat> parser);
-
-    protected virtual bool FinishParsing(IEckslangScanner scanner, IEckslangVisitor visitor)
-    {
-        if (!scanner.EndOfContent)
-            throw new FormatException($"Unexpected content after end of parsing.");
-
-        visitor.Visit("end", ReadOnlySpan<char>.Empty, null, null, null);
-        return true;
-    }
+    protected abstract void PrepareRun(TRun run);
 }

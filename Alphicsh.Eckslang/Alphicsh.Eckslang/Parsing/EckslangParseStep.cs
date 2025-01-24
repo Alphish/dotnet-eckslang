@@ -2,4 +2,5 @@
 
 namespace Alphicsh.Eckslang.Parsing;
 
-public delegate bool EckslangParseStep(IEckslangScanner scanner, IEckslangVisitor visitor);
+public delegate StepCompletion EckslangParseStep<TRun>(IEckslangScanner scanner, TRun run)
+    where TRun : IEckslangParseRun<TRun>;

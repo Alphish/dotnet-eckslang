@@ -4,8 +4,7 @@ public interface IEckslangFormat
 {
 }
 
-public interface IEckslangFormat<TFormat> : IEckslangFormat
-    where TFormat : IEckslangFormat<TFormat>
+public interface IEckslangFormat<TFlow> : IEckslangFormat
 {
-    void SetupParser(IEckslangParser<TFormat> parser, IEckslangVisitor visitor);
+    IEckslangParser Parse(string content, TFlow flow);
 }
