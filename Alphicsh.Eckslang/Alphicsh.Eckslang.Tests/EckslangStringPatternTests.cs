@@ -78,7 +78,7 @@ public class EckslangStringPatternTests
     {
         foreach (var pattern in Patterns)
         {
-            var result = Scanner.ReadSpan(pattern);
+            var result = Scanner.ReadPattern(pattern);
             if (!result.IsEmpty)
                 return (pattern, result.ToString());
         }

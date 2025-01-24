@@ -48,15 +48,15 @@ public class EckslangCharsetPatternTests
 
     private (string, string) ReadPattern()
     {
-        var variable = Scanner.ReadSpan(VariablePattern);
+        var variable = Scanner.ReadPattern(VariablePattern);
         if (variable.Length > 0)
             return ("variable", variable.ToString());
 
-        var number = Scanner.ReadSpan(NumberPattern);
+        var number = Scanner.ReadPattern(NumberPattern);
         if (number.Length > 0)
             return ("number", number.ToString());
 
-        var space = Scanner.ReadSpan(SpacePattern);
+        var space = Scanner.ReadPattern(SpacePattern);
         if (space.Length > 0)
             return ("space", space.ToString());
 

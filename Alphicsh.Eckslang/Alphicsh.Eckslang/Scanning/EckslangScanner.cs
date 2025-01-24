@@ -1,16 +1,21 @@
-﻿namespace Alphicsh.Eckslang.Scanning;
+﻿using System.Text.RegularExpressions;
+
+namespace Alphicsh.Eckslang.Scanning;
 
 public class EckslangScanner : IEckslangScanner
 {
     public string Content { get; }
+    public int Length { get; }
     public int Position { get; private set; }
-    public bool EndOfContent => Position >= Content.Length;
+    public char CurrentCharacter => Content[Position];
+    public bool EndOfContent => Position >= Length;
 
     public IEckslangCursor Cursor => UpdateCursor();
 
     public EckslangScanner(string content)
     {
-        Content = content;
+        Length = content.Length;
+        Content = content + '\0';
         Position = 0;
         LastCursor = new EckslangCursor();
     }
@@ -18,7 +23,77 @@ public class EckslangScanner : IEckslangScanner
     public ReadOnlySpan<char> Head => Content.AsSpan(Position);
     public ReadOnlySpan<char> Tail => Content.AsSpan(0, Position);
 
-    public ReadOnlySpan<char> ReadSpan(IEckslangPattern pattern)
+    public void SkipChar()
+    {
+        Position++;
+    }
+
+    public void ExpectChar(char c)
+    {
+        if (Content[Position] != c)
+            throw new FormatException($"Unexpected character '{Content[Position]}', '{c}' expected.");
+
+        Position++;
+    }
+
+    public bool TrySkipChar(char c)
+    {
+        if (Content[Position] != c)
+            return false;
+
+        Position++;
+        return true;
+    }
+
+    public void ExpectRegex(Regex regex)
+    {
+        var enumeration = regex.EnumerateMatches(Content, Position);
+        if (!enumeration.MoveNext())
+            throw new FormatException($"Could not read expected pattern.");
+
+        Position += enumeration.Current.Length;
+    }
+
+    public void SkipRegex(Regex regex)
+    {
+        var enumeration = regex.EnumerateMatches(Content, Position);
+        enumeration.MoveNext();
+        Position += enumeration.Current.Length;
+    }
+
+    public bool TrySkipRegex(Regex regex)
+    {
+        var enumeration = regex.EnumerateMatches(Content, Position);
+        if (!enumeration.MoveNext())
+            return false;
+
+        Position += enumeration.Current.Length;
+        return true;
+    }
+
+    public ReadOnlySpan<char> TryReadRegex(Regex regex)
+    {
+        var enumeration = regex.EnumerateMatches(Content, Position);
+        if (!enumeration.MoveNext())
+            return ReadOnlySpan<char>.Empty;
+
+        var result = Head.Slice(0, enumeration.Current.Length);
+        Position += enumeration.Current.Length;
+        return result;
+    }
+
+    public ReadOnlySpan<char> ReadRegex(Regex regex)
+    {
+        var enumeration = regex.EnumerateMatches(Content, Position);
+        if (!enumeration.MoveNext())
+            throw new FormatException($"Could not read expected pattern at {Position}.");
+
+        var result = Head.Slice(0, enumeration.Current.Length);
+        Position += enumeration.Current.Length;
+        return result;
+    }
+
+    public ReadOnlySpan<char> ReadPattern(IEckslangPattern pattern)
     {
         var match = pattern.Match(this);
         if (match.Length == 0)

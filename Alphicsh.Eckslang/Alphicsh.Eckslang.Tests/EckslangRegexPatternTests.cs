@@ -33,7 +33,7 @@ public class EckslangRegexPatternTests
 
     private void ShouldReadPattern(IEckslangPattern pattern, string expected)
     {
-        var actual = Scanner.ReadSpan(pattern).ToString();
+        var actual = Scanner.ReadPattern(pattern).ToString();
         Assert.Equal(expected, actual);
     }
 }
