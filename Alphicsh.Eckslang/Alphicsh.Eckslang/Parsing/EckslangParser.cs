@@ -12,6 +12,8 @@ public class EckslangParser<TRun> : IEckslangParser
     {
         Scanner = scanner;
         Run = run;
+
+        Scanner.ScanFailed += (sender, e) => Run.Finish();
     }
 
     public void ParseNext()

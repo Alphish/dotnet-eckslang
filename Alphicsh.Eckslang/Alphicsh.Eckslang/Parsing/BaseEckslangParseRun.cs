@@ -8,6 +8,8 @@ public class BaseEckslangParseRun<TRun> : IEckslangParseRun<TRun>
     public EckslangParseStep<TRun> CurrentStep { get; private set; }
     private Stack<EckslangParseStep<TRun>> PendingSteps { get; }
     public bool IsFinished { get; private set; }
+    public void Finish()
+        => IsFinished = true;
 
     public BaseEckslangParseRun()
     {
