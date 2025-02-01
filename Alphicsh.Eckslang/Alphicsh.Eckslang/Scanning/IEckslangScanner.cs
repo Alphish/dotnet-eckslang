@@ -15,9 +15,9 @@ public interface IEckslangScanner
 
     IEckslangCursor Cursor { get; }
     void SkipNext();
-    void JumpBy(int length);
-    void JumpTo(int position);
-    void JumpTo(IEckslangCursor cursor);
+    void MoveBy(int length);
+    void MoveTo(int position);
+    void MoveTo(IEckslangCursor cursor);
 
     bool HasAhead(char c);
     bool HasAhead(string str);

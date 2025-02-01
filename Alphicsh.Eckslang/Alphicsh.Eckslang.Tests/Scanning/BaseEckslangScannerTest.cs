@@ -24,7 +24,7 @@ public abstract class BaseEckslangScannerTest
 
     protected void GivenPosition(int position)
     {
-        Scanner.JumpTo(position);
+        Scanner.MoveTo(position);
     }
 
     // -----

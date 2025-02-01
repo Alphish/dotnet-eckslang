@@ -121,7 +121,7 @@ public class EckslangFailureTests
     }
 
     private void GivenPosition(int position)
-        => Scanner.JumpTo(position);
+        => Scanner.MoveTo(position);
 
     private void When(Action action)
         => action();

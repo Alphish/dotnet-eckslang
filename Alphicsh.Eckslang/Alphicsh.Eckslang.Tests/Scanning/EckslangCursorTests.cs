@@ -156,13 +156,13 @@ public class EckslangCursorTests
     {
         var scanner = new EckslangScanner(Tail + Span + Head);
 
-        scanner.JumpTo(Tail.Length);
+        scanner.MoveTo(Tail.Length);
         InitialCursor = scanner.Cursor;
 
-        scanner.JumpBy(Span.Length);
+        scanner.MoveBy(Span.Length);
         AdvanceCursor = scanner.Cursor;
 
-        scanner.JumpTo(Tail.Length);
+        scanner.MoveTo(Tail.Length);
         BacktrackCursor = scanner.Cursor;
     }
 

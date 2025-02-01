@@ -11,8 +11,6 @@ public class EckslangScanner : IEckslangScanner
     public char CurrentCharacter => Content[Position];
     public bool EndOfContent => Position >= Length;
 
-    public IEckslangCursor Cursor => UpdateCursor();
-
     public EckslangScanner(string content)
     {
         Length = content.Length;
@@ -23,6 +21,52 @@ public class EckslangScanner : IEckslangScanner
 
     public ReadOnlySpan<char> Head => Content.AsSpan(Position, Length - Position);
     public ReadOnlySpan<char> Tail => Content.AsSpan(0, Position);
+
+    // ------------------------
+    // Position/cursor handling
+    // ------------------------
+
+    public IEckslangCursor Cursor => UpdateCursor();
+
+    private IEckslangCursor LastCursor { get; set; }
+
+    public void SkipNext()
+    {
+        if (Position < Length)
+            Position++;
+    }
+
+    public void MoveBy(int length)
+    {
+        MoveTo(Position + length);
+    }
+
+    public void MoveTo(int position)
+    {
+        Position = Math.Clamp(position, 0, Length);
+    }
+
+    public void MoveTo(IEckslangCursor cursor)
+    {
+        LastCursor = cursor;
+        MoveTo(cursor.Position);
+    }
+
+    private IEckslangCursor UpdateCursor()
+    {
+        var positionChange = Position - LastCursor.Position;
+        if (positionChange > 0)
+        {
+            var advanceSpan = Content.AsSpan(LastCursor.Position, positionChange);
+            LastCursor = LastCursor.Advance(advanceSpan, this);
+        }
+        else if (positionChange < 0)
+        {
+            var backSpan = Content.AsSpan(Position, -positionChange);
+            LastCursor = LastCursor.Backtrack(backSpan, this);
+        }
+        return LastCursor;
+    }
 
     // -------------
     // Scanning past
@@ -171,49 +215,6 @@ public class EckslangScanner : IEckslangScanner
 
     public ReadOnlySpan<char> Read(Regex regex, EckslangFailureGenerator? failureGenerator = null)
         => AdvanceOrFail(Peek(regex), failureGenerator ?? UnmatchedRegexFailure.GeneratorFor(regex));
-
-    // ------------------------
-    // Position/cursor handling
-    // ------------------------
-
-    private IEckslangCursor LastCursor { get; set; }
-
-    public void SkipNext()
-    {
-        Position++;
-    }
-
-    public void JumpBy(int length)
-    {
-        Position += length;
-    }
-
-    public void JumpTo(int position)
-    {
-        Position = position;
-    }
-
-    public void JumpTo(IEckslangCursor cursor)
-    {
-        LastCursor = cursor;
-        Position = cursor.Position;
-    }
-
-    private IEckslangCursor UpdateCursor()
-    {
-        var positionChange = Position - LastCursor.Position;
-        if (positionChange > 0)
-        {
-            var advanceSpan = Content.AsSpan(LastCursor.Position, positionChange);
-            LastCursor = LastCursor.Advance(advanceSpan, this);
-        }
-        else if (positionChange < 0)
-        {
-            var backSpan = Content.AsSpan(Position, -positionChange);
-            LastCursor = LastCursor.Backtrack(backSpan, this);
-        }
-        return LastCursor;
-    }
 
     // --------
     // Failures
