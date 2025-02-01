@@ -1,4 +1,5 @@
 ﻿using System.Text.RegularExpressions;
+using Alphicsh.Eckslang.Failures;
 
 namespace Alphicsh.Eckslang.Scanning;
 
@@ -20,88 +21,156 @@ public class EckslangScanner : IEckslangScanner
         LastCursor = new EckslangCursor();
     }
 
-    public ReadOnlySpan<char> Head => Content.AsSpan(Position);
+    public ReadOnlySpan<char> Head => Content.AsSpan(Position, Length - Position);
     public ReadOnlySpan<char> Tail => Content.AsSpan(0, Position);
 
-    public void SkipChar()
+    // -------------
+    // Scanning past
+    // -------------
+
+    public bool HasAhead(char c)
+        => CurrentCharacter == c;
+
+    public bool HasAhead(string str)
+        => Head.StartsWith(str);
+
+    public bool HasAhead(string str, StringComparison comparison)
+        => Head.StartsWith(str, comparison);
+
+    public bool HasAhead(Regex regex)
     {
-        Position++;
+        var enumeration = regex.EnumerateMatches(Head);
+        return enumeration.MoveNext() && enumeration.Current.Index == 0;
     }
 
-    public void ExpectChar(char c)
+    public bool TrySkip(char c)
     {
-        if (Content[Position] != c)
-            throw new FormatException($"Unexpected character '{Content[Position]}', '{c}' expected.");
-
-        Position++;
-    }
-
-    public bool TrySkipChar(char c)
-    {
-        if (Content[Position] != c)
+        if (CurrentCharacter != c)
             return false;
 
         Position++;
         return true;
     }
 
-    public void ExpectRegex(Regex regex)
+    public bool TrySkip(string str)
     {
-        var enumeration = regex.EnumerateMatches(Content, Position);
-        if (!enumeration.MoveNext())
-            throw new FormatException($"Could not read expected pattern.");
+        if (!Head.StartsWith(str))
+            return false;
 
-        Position += enumeration.Current.Length;
+        Position += str.Length;
+        return true;
     }
 
-    public void SkipRegex(Regex regex)
+    public bool TrySkip(string str, StringComparison comparison)
     {
-        var enumeration = regex.EnumerateMatches(Content, Position);
-        enumeration.MoveNext();
-        Position += enumeration.Current.Length;
+        if (!Head.StartsWith(str, comparison))
+            return false;
+
+        Position += str.Length;
+        return true;
     }
 
-    public bool TrySkipRegex(Regex regex)
+    public bool TrySkip(Regex regex)
     {
-        var enumeration = regex.EnumerateMatches(Content, Position);
-        if (!enumeration.MoveNext())
+        var enumeration = regex.EnumerateMatches(Head);
+        if (!enumeration.MoveNext() || enumeration.Current.Index > 0)
             return false;
 
         Position += enumeration.Current.Length;
         return true;
     }
 
-    public ReadOnlySpan<char> TryReadRegex(Regex regex)
+    public bool Expect(char c, EckslangFailureGenerator? failureGenerator = null)
+        => TrySkip(c) || FailAndReturnFalse(failureGenerator ?? UnexpectedCharacterFailure.GeneratorFor(c));
+
+    public bool Expect(string str, EckslangFailureGenerator? failureGenerator = null)
+        => TrySkip(str) || FailAndReturnFalse(failureGenerator ?? UnexpectedStringFailure.GeneratorFor(str));
+
+    public bool Expect(string str, StringComparison comparison, EckslangFailureGenerator? failureGenerator = null)
+        => TrySkip(str, comparison) || FailAndReturnFalse(failureGenerator ?? UnexpectedStringFailure.GeneratorFor(str));
+
+    public bool Expect(Regex regex, EckslangFailureGenerator? failureGenerator = null)
+        => TrySkip(regex) || FailAndReturnFalse(failureGenerator ?? UnmatchedRegexFailure.GeneratorFor(regex));
+
+    // -------
+    // Peeking
+    // -------
+
+    public ReadOnlySpan<char> Peek(char c)
     {
-        var enumeration = regex.EnumerateMatches(Content, Position);
-        if (!enumeration.MoveNext())
+        if (CurrentCharacter != c)
             return ReadOnlySpan<char>.Empty;
 
-        var result = Head.Slice(0, enumeration.Current.Length);
-        Position += enumeration.Current.Length;
-        return result;
+        return Head.Slice(0, 1);
     }
 
-    public ReadOnlySpan<char> ReadRegex(Regex regex)
+    public ReadOnlySpan<char> Peek(string str)
     {
-        var enumeration = regex.EnumerateMatches(Content, Position);
-        if (!enumeration.MoveNext())
-            throw new FormatException($"Could not read expected pattern at {Position}.");
+        if (!Head.StartsWith(str))
+            return ReadOnlySpan<char>.Empty;
 
-        var result = Head.Slice(0, enumeration.Current.Length);
-        Position += enumeration.Current.Length;
-        return result;
+        return Head.Slice(0, str.Length);
     }
 
-    public ReadOnlySpan<char> ReadPattern(IEckslangPattern pattern)
+    public ReadOnlySpan<char> Peek(string str, StringComparison comparison)
     {
-        var match = pattern.Match(this);
-        if (match.Length == 0)
-            return match;
+        if (!Head.StartsWith(str, comparison))
+            return ReadOnlySpan<char>.Empty;
 
-        Position += match.Length;
-        return match;
+        return Head.Slice(0, str.Length);
     }
+
+    public ReadOnlySpan<char> Peek(Regex regex)
+    {
+        var enumeration = regex.EnumerateMatches(Head);
+        if (!enumeration.MoveNext() || enumeration.Current.Index > 0)
+            return ReadOnlySpan<char>.Empty;
+
+        return Head.Slice(0, enumeration.Current.Length);
+    }
+
+    // -------
+    // Reading
+    // -------
+
+    private ReadOnlySpan<char> TryAdvance(ReadOnlySpan<char> span)
+    {
+        Position += span.Length;
+        return span;
+    }
+
+    public ReadOnlySpan<char> TryRead(char c)
+        => TryAdvance(Peek(c));
+
+    public ReadOnlySpan<char> TryRead(string str)
+        => TryAdvance(Peek(str));
+
+    public ReadOnlySpan<char> TryRead(string str, StringComparison comparison)
+        => TryAdvance(Peek(str, comparison));
+
+    public ReadOnlySpan<char> TryRead(Regex regex)
+        => TryAdvance(Peek(regex));
+
+    private ReadOnlySpan<char> AdvanceOrFail(ReadOnlySpan<char> span, EckslangFailureGenerator failureGenerator)
+    {
+        if (span.Length == 0)
+            Fail(failureGenerator);
+
+        Position += span.Length;
+        return span;
+    }
+
+    public ReadOnlySpan<char> Read(char c, EckslangFailureGenerator? failureGenerator = null)
+        => AdvanceOrFail(Peek(c), failureGenerator ?? UnexpectedCharacterFailure.GeneratorFor(c));
+
+    public ReadOnlySpan<char> Read(string str, EckslangFailureGenerator? failureGenerator = null)
+        => AdvanceOrFail(Peek(str), failureGenerator ?? UnexpectedStringFailure.GeneratorFor(str));
+
+    public ReadOnlySpan<char> Read(string str, StringComparison comparison, EckslangFailureGenerator? failureGenerator = null)
+        => AdvanceOrFail(Peek(str, comparison), failureGenerator ?? UnexpectedStringFailure.GeneratorFor(str));
+
+    public ReadOnlySpan<char> Read(Regex regex, EckslangFailureGenerator? failureGenerator = null)
+        => AdvanceOrFail(Peek(regex), failureGenerator ?? UnmatchedRegexFailure.GeneratorFor(regex));
 
     // ------------------------
     // Position/cursor handling
@@ -109,15 +178,25 @@ public class EckslangScanner : IEckslangScanner
 
     private IEckslangCursor LastCursor { get; set; }
 
-    public void JumpTo(IEckslangCursor cursor)
+    public void SkipNext()
     {
-        LastCursor = cursor;
-        Position = cursor.Position;
+        Position++;
+    }
+
+    public void JumpBy(int length)
+    {
+        Position += length;
     }
 
     public void JumpTo(int position)
     {
         Position = position;
+    }
+
+    public void JumpTo(IEckslangCursor cursor)
+    {
+        LastCursor = cursor;
+        Position = cursor.Position;
     }
 
     private IEckslangCursor UpdateCursor()
@@ -135,4 +214,32 @@ public class EckslangScanner : IEckslangScanner
         }
         return LastCursor;
     }
+
+    // --------
+    // Failures
+    // --------
+
+    public IEckslangFailure? Failure { get; private set; }
+    public bool IsFailed => Failure != null;
+
+    public void Fail(IEckslangFailure failure)
+    {
+        Failure = failure;
+        Position = Length; // go to the end, since there's no point in scanning anymore
+        ScanFailed?.Invoke(this, new EckslangFailureEventArgs(failure));
+    }
+
+    public void Fail(EckslangFailureGenerator failureGenerator)
+    {
+        var failure = failureGenerator(this);
+        Fail(failure);
+    }
+
+    private bool FailAndReturnFalse(EckslangFailureGenerator failureGenerator)
+    {
+        Fail(failureGenerator);
+        return false;
+    }
+
+    public event EckslangFailureEventHandler? ScanFailed;
 }

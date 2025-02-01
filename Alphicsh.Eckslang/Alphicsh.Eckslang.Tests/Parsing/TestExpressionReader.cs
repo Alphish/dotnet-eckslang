@@ -9,23 +9,23 @@ public class TestExpressionReader : EckslangReader<TestFormat>
 
     public StepCompletion ReadWord(IEckslangScanner scanner, TestParseRun run)
     {
-        scanner.SkipRegex(Format.SpacePattern);
+        scanner.TrySkip(Format.SpacePattern);
 
-        var word = scanner.ReadRegex(Format.WordPattern);
+        var word = scanner.Read(Format.WordPattern);
         run.VisitWord(word);
 
-        scanner.SkipRegex(Format.SpacePattern);
+        scanner.TrySkip(Format.SpacePattern);
         return run.ProceedWith(TryOpenParenthesis);
     }
 
     public StepCompletion TryOpenParenthesis(IEckslangScanner scanner, TestParseRun run)
     {
-        if (!scanner.TrySkipChar('('))
+        if (!scanner.TrySkip('('))
             return run.LeaveScope();
 
         run.OpenParam();
 
-        scanner.SkipRegex(Format.SpacePattern);
+        scanner.TrySkip(Format.SpacePattern);
         if (scanner.CurrentCharacter == ')')
             return run.ProceedWith(CloseParenthesis);
 
@@ -34,12 +34,12 @@ public class TestExpressionReader : EckslangReader<TestFormat>
 
     public StepCompletion ContinueParenthesis(IEckslangScanner scanner, TestParseRun run)
     {
-        if (!scanner.TrySkipChar(','))
+        if (!scanner.TrySkip(','))
             return run.ProceedWith(CloseParenthesis);
 
         run.SeparateItem();
 
-        scanner.SkipRegex(Format.SpacePattern);
+        scanner.TrySkip(Format.SpacePattern);
         if (scanner.CurrentCharacter == ')')
             return run.ProceedWith(CloseParenthesis);
 
@@ -48,10 +48,10 @@ public class TestExpressionReader : EckslangReader<TestFormat>
 
     public StepCompletion CloseParenthesis(IEckslangScanner scanner, TestParseRun run)
     {
-        scanner.ExpectChar(')');
+        scanner.Expect(')');
         run.CloseParam();
 
-        scanner.SkipRegex(Format.SpacePattern);
+        scanner.TrySkip(Format.SpacePattern);
         return run.LeaveScope();
     }
 }

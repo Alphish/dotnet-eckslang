@@ -1,9 +1,11 @@
 ﻿using System.Text.RegularExpressions;
+using Alphicsh.Eckslang.Failures;
 
 namespace Alphicsh.Eckslang.Scanning;
 
 public interface IEckslangScanner
 {
+    int Length { get; }
     int Position { get; }
     char CurrentCharacter { get; }
     bool EndOfContent { get; }
@@ -12,19 +14,44 @@ public interface IEckslangScanner
     ReadOnlySpan<char> Tail { get; }
 
     IEckslangCursor Cursor { get; }
-
-    void SkipChar();
-    void ExpectChar(char c);
-    bool TrySkipChar(char c);
-
-    void ExpectRegex(Regex regex);
-    void SkipRegex(Regex regex);
-    bool TrySkipRegex(Regex regex);
-    ReadOnlySpan<char> TryReadRegex(Regex regex);
-    ReadOnlySpan<char> ReadRegex(Regex regex);
-
-    ReadOnlySpan<char> ReadPattern(IEckslangPattern pattern);
-
-    void JumpTo(IEckslangCursor cursor);
+    void SkipNext();
+    void JumpBy(int length);
     void JumpTo(int position);
+    void JumpTo(IEckslangCursor cursor);
+
+    bool HasAhead(char c);
+    bool HasAhead(string str);
+    bool HasAhead(string str, StringComparison comparison);
+    bool HasAhead(Regex regex);
+
+    bool TrySkip(char c);
+    bool TrySkip(string str);
+    bool TrySkip(string str, StringComparison comparison);
+    bool TrySkip(Regex regex);
+
+    bool Expect(char c, EckslangFailureGenerator? failureGenerator = null);
+    bool Expect(string str, EckslangFailureGenerator? failureGenerator = null);
+    bool Expect(string str, StringComparison comparison, EckslangFailureGenerator? failureGenerator = null);
+    bool Expect(Regex regex, EckslangFailureGenerator? failureGenerator = null);
+
+    ReadOnlySpan<char> Peek(char c);
+    ReadOnlySpan<char> Peek(string str);
+    ReadOnlySpan<char> Peek(string str, StringComparison comparison);
+    ReadOnlySpan<char> Peek(Regex regex);
+
+    ReadOnlySpan<char> TryRead(char c);
+    ReadOnlySpan<char> TryRead(string str);
+    ReadOnlySpan<char> TryRead(string str, StringComparison comparison);
+    ReadOnlySpan<char> TryRead(Regex regex);
+
+    ReadOnlySpan<char> Read(char c, EckslangFailureGenerator? failureGenerator = null);
+    ReadOnlySpan<char> Read(string str, EckslangFailureGenerator? failureGenerator = null);
+    ReadOnlySpan<char> Read(string str, StringComparison comparison, EckslangFailureGenerator? failureGenerator = null);
+    ReadOnlySpan<char> Read(Regex regex, EckslangFailureGenerator? failureGenerator = null);
+
+    IEckslangFailure? Failure { get; }
+    bool IsFailed { get; }
+    void Fail(IEckslangFailure failure);
+    void Fail(EckslangFailureGenerator failureGenerator);
+    event EckslangFailureEventHandler? ScanFailed;
 }
