@@ -1,6 +1,6 @@
 ﻿using Alphicsh.Eckslang.Scanning;
 
-namespace Alphicsh.Eckslang.Tests;
+namespace Alphicsh.Eckslang.Tests.Scanning;
 
 public class EckslangCursorTests
 {
@@ -159,7 +159,7 @@ public class EckslangCursorTests
         scanner.JumpTo(Tail.Length);
         InitialCursor = scanner.Cursor;
 
-        scanner.JumpTo(Tail.Length + Span.Length);
+        scanner.JumpBy(Span.Length);
         AdvanceCursor = scanner.Cursor;
 
         scanner.JumpTo(Tail.Length);

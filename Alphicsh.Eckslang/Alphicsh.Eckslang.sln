@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.11.35222.181
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Alphicsh.Eckslang", "Alphicsh.Eckslang\Alphicsh.Eckslang.csproj", "{F6593E3F-6674-4850-A96E-CCA93457372F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Alphicsh.Eckslang", "Alphicsh.Eckslang\Alphicsh.Eckslang.csproj", "{F6593E3F-6674-4850-A96E-CCA93457372F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Alphicsh.Eckslang.Tests", "Alphicsh.Eckslang.Tests\Alphicsh.Eckslang.Tests.csproj", "{972AAA34-FD4A-420A-93CC-19AC852EC09F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Alphicsh.Eckslang.Tests", "Alphicsh.Eckslang.Tests\Alphicsh.Eckslang.Tests.csproj", "{8437E17F-CB96-4689-926C-AA070CEF1FA5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,10 +17,10 @@ Global
 		{F6593E3F-6674-4850-A96E-CCA93457372F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F6593E3F-6674-4850-A96E-CCA93457372F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F6593E3F-6674-4850-A96E-CCA93457372F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{972AAA34-FD4A-420A-93CC-19AC852EC09F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{972AAA34-FD4A-420A-93CC-19AC852EC09F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{972AAA34-FD4A-420A-93CC-19AC852EC09F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{972AAA34-FD4A-420A-93CC-19AC852EC09F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8437E17F-CB96-4689-926C-AA070CEF1FA5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8437E17F-CB96-4689-926C-AA070CEF1FA5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8437E17F-CB96-4689-926C-AA070CEF1FA5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8437E17F-CB96-4689-926C-AA070CEF1FA5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
