@@ -77,6 +77,18 @@ public class EckslangCursorTests
     }
 
     [Fact]
+    public void ShouldPauseMidCrlfAdvanceWithMultilineSpan()
+    {
+        GivenTail("Lorem ipsum ");
+        GivenSpan("dolor\nsit\namet,\r");
+        GivenHead("\n consectetur adipiscing elit");
+        WhenScannerMoved();
+        ThenInitialCursorShouldBe(position: 12, line: 1, column: 13);
+        ThenAdvanceCursorShouldBe(position: 28, line: 3, column: 7);
+        ThenBacktrackCursorShouldMatchInitialCursor();
+    }
+
+    [Fact]
     public void ShouldAddLinePastCrWithoutLfAdvance()
     {
         GivenTail("Lorem ipsum ");
